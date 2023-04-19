@@ -2,29 +2,57 @@
 
 echo $$ > "$HOME/.spotify-xbar/$(basename "$0").pid"
 
+ADS_PATTERN='^(Advertisement|Spotify)$'
 MUTED=false
-AD_TRACKS='Advertisement'
 
 function isRunning() {
-    osascript -e "tell application \"System Events\" to (name of processes) contains \"$1\""
+    osascript -e "tell application \"System Events\" to (name of processes) contains \"Spotify\""
+}
+
+function playerState() {
+    osascript -e 'tell application "Spotify" to player state'
 }
 
 function currentTrack() {
-    [ "$(isRunning Spotify)" == true ] && osascript -e 'tell application "Spotify" to name of current track as string'
+    osascript -e 'tell application "Spotify" to name of current track as string'
+}
+
+function currentArtist() {
+    osascript -e 'tell application "Spotify" to artist of current track'
+}
+
+function isAdvertisement() {
+    if [[ -z  "$1" ]]; then
+        echo 'true';
+    elif [[ "$1" =~ $ADS_PATTERN ]]; then
+        echo 'true';
+    else
+        echo 'false';
+    fi
 }
 
 while true; do
-    track=$(currentTrack)
-    echo "$track" > "$HOME/.spotify-xbar/.current-track"
+    if [[ "$(isRunning)" == true && "$(playerState)" == 'playing' ]]; then
+        track=$(currentTrack)
+        isAd="$(isAdvertisement "$track")"
 
-    if [[ "$track" == "$AD_TRACKS" ]] && [ "$MUTED" == false ]; then
-        # echo 'Advertisement detected, muting'
-        MUTED=true
-        osascript "$HOME"/.spotify-xbar/volume-mute.scpt
-    elif [[ "$track" != "$AD_TRACKS" ]] && [ "$MUTED" == true ]; then
-        # echo 'Advertisement ended, unmuting'
-        MUTED=false
-        osascript "$HOME"/.spotify-xbar/volume-mute.scpt
+        if [[ "$isAd" == true ]]; then
+            echo "!!AD:$track" > "$HOME/.spotify-xbar/.current-track"
+        else
+            echo "$track by $(currentArtist)" > "$HOME/.spotify-xbar/.current-track"
+        fi
+
+        if [[ "$isAd" == true ]] && [ "$MUTED" == false ]; then
+            # echo 'Advertisement detected, muting'
+            MUTED=true
+            osascript -e 'tell application "Spotify" to set sound volume to 0'
+        elif [[ "$isAd" == false ]] && [ "$MUTED" == true ]; then
+            # echo 'Advertisement ended, unmuting'
+            MUTED=false
+            osascript -e 'tell application "Spotify" to set sound volume to 100'
+        fi
+    else
+        echo '' > "$HOME/.spotify-xbar/.current-track"
     fi
 
     sleep 1

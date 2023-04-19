@@ -17,6 +17,6 @@ function startAdBlock() {
 pgrep -F "$HOME/.spotify-xbar/spotify-adblock.sh.pid" &> /dev/null || startAdBlock &> /dev/null
 track=$(cat "$HOME/.spotify-xbar/.current-track") &> /dev/null
 
-[[ "$track" != 'Advertisement' ]] && echo ':musical_note:' || echo ':musical_score:'
+[[ "$track" = !!AD:* ]] && echo ':musical_score:' || echo ':musical_note:'
 echo '---'
 echo "$track"
