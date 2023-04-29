@@ -2,7 +2,7 @@
 
 echo $$ > "$HOME/.spotify-xbar/$(basename "$0").pid"
 
-ADS_PATTERN='^(Advertisement|Spotify)$'
+ADS_PATTERN="^($(echo -n "$(cat "$HOME/.spotify-xbar/blocked.txt")" | tr '\n' '|'))$"
 MUTED=false
 
 function isRunning() {
