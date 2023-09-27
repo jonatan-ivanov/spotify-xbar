@@ -21,10 +21,12 @@ function currentArtist() {
     osascript -e 'tell application "Spotify" to artist of current track'
 }
 
-function isAdvertisement() {
+function isAdvertisement() { # artist track
     if [[ -z  "$1" ]]; then
         echo 'true';
-    elif [[ "$1" =~ $ADS_PATTERN ]]; then
+    elif [[ -z  "$2" ]]; then
+        echo 'true';
+    elif [[ "$2" =~ $ADS_PATTERN ]]; then
         echo 'true';
     else
         echo 'false';
@@ -34,12 +36,13 @@ function isAdvertisement() {
 while true; do
     if [[ "$(isRunning)" == true && "$(playerState)" == 'playing' ]]; then
         track=$(currentTrack)
-        isAd="$(isAdvertisement "$track")"
+        artist=$(currentArtist)
+        isAd="$(isAdvertisement "$artist" "$track")"
 
         if [[ "$isAd" == true ]]; then
-            echo "!!AD:$track" > "$HOME/.spotify-xbar/.current-track"
+            echo "!!AD:$track by $artist" > "$HOME/.spotify-xbar/.current-track"
         else
-            echo "$track by $(currentArtist)" > "$HOME/.spotify-xbar/.current-track"
+            echo "$track by $artist" > "$HOME/.spotify-xbar/.current-track"
         fi
 
         if [[ "$isAd" == true ]] && [ "$MUTED" == false ]; then
